@@ -35,7 +35,7 @@ enum ZBID
 
 const TCHAR* WindowTitle = _T("RustDeskPrivacyWindow");
 const TCHAR* ClassName = _T("RustDeskPrivacyWindowClass");
-const TCHAR* DefaultBmpPath = _T("D:\\aa.bmp");
+const TCHAR* DefaultBmpPath = _T("C:\\aa.bmp");
 
 typedef HWND(WINAPI* CreateWindowInBand)(_In_ DWORD dwExStyle, _In_opt_ ATOM atom, _In_opt_ LPCWSTR lpWindowName, _In_ DWORD dwStyle, _In_ int X, _In_ int Y, _In_ int nWidth, _In_ int nHeight, _In_opt_ HWND hWndParent, _In_opt_ HMENU hMenu, _In_opt_ HINSTANCE hInstance, _In_opt_ LPVOID lpParam, DWORD band);
 typedef BOOL(WINAPI* SetWindowBand)(HWND hWnd, HWND hwndInsertAfter, DWORD dwBand);
@@ -243,7 +243,7 @@ SharedHWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR
 		return nullptr;
 	}
 
-	ShowWindow(hwnd, SW_SHOW);
+	ShowWindow(hwnd, SW_HIDE);
 	if (FALSE == UpdateWindow(hwnd))
 	{
 		ShowErrorMsg(_T("UpdateWindow"));
@@ -338,12 +338,16 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ulReasonForCall, LPVOID lpReserved
 		CreateThread(nullptr, 0, UwU, hModule, NULL, NULL);
 		break;
 	case DLL_THREAD_ATTACH:
+		break;
 	case DLL_THREAD_DETACH:
+		break;
 	case DLL_PROCESS_DETACH:
 		if (g_shwnd)
 		{
 			PostMessage(g_shwnd.get(), WM_CLOSE, NULL, NULL);
 		}
+		break;
+	default:
 		break;
 	}
 

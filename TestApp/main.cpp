@@ -137,6 +137,10 @@ int main(int argc, char* argv[])
 
 		printf("now show window\n");
 		ShowWindow(hwnd, SW_SHOW);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1 * 1000));
+
+		// printf("now destroy window\n");
+		// PostMessage(hwnd, WM_CLOSE, NULL, NULL);
 	}
 
 	return 0;
