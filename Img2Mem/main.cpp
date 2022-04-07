@@ -4,44 +4,42 @@
 #include <fstream>  
 #include <streambuf>
 
+#include "../WindowInjection/img.h"
+
 void print_usage(const char* exe)
 {
-    printf("usage: %s <img file>\n", exe);
+    printf("usage: %s <load|save> <img file>\n", exe);
 }
+
+int load_img(const char* infile);
+int save_img(const char* outfile);
 
 int write_imgdata(const std::vector<char>& data, const char* outfile);
 
 int main(int argc, char* argv[])
 {
-    if (argc != 2)
+    if (argc != 3)
     {
         print_usage(argv[0]);
         return 0;
     }
 
-    const char* infile = argv[1];
-    const char* outfile = "../WindowInjection/img.cpp";
-
-    std::ifstream ifs(infile, std::ios::binary);
-    if (!ifs.is_open())
+    std::string cmd(argv[1]);
+    if (cmd == "load")
     {
-        printf("Failed to open %s\n", infile);
-        return 0;
+        printf("begin load image\n");
+        return load_img(argv[2]);
     }
-
-    std::vector<char> imgdata(
-        (std::istreambuf_iterator<char>(ifs)),
-        std::istreambuf_iterator<char>());
-    
-    if (0 != write_imgdata(imgdata, outfile))
+    else if (cmd == "save")
     {
-        printf("Failed to write image data, %s -> %s\n", infile, outfile);
+        printf("begin save image\n");
+        return save_img(argv[2]);
     }
     else
     {
-        printf("Succeeded to write image data, %s -> %s\n", infile, outfile);
+        print_usage(argv[0]);
+        return 0;
     }
-    return 0;
 }
 
 int write_imgdata(const std::vector<char>& data, const char* outfile)
@@ -76,5 +74,45 @@ int write_imgdata(const std::vector<char>& data, const char* outfile)
     }
     ofs << "};\n";
 
+    return 0;
+}
+
+int load_img(const char* infile)
+{
+    const char* outfile = "../WindowInjection/img.cpp";
+
+    std::ifstream ifs(infile, std::ios::binary);
+    if (!ifs.is_open())
+    {
+        printf("Failed to open %s\n", infile);
+        return 0;
+    }
+
+    std::vector<char> imgdata(
+        (std::istreambuf_iterator<char>(ifs)),
+        std::istreambuf_iterator<char>());
+
+    if (0 != write_imgdata(imgdata, outfile))
+    {
+        printf("Failed to write image data, %s -> %s\n", infile, outfile);
+    }
+    else
+    {
+        printf("Succeeded to write image data, %s -> %s\n", infile, outfile);
+    }
+    return 0;
+}
+
+int save_img(const char* outfile)
+{
+    std::ofstream ofs(outfile, std::ios::binary|std::ios::trunc);
+    if (!ofs.is_open())
+    {
+        printf("Failed to open %s\n", outfile);
+        return 0;
+    }
+
+    std::copy(g_img.begin(), g_img.end(), std::ostreambuf_iterator<char>(ofs));
+    printf("Succeeded to write to %s\n", outfile);
     return 0;
 }
