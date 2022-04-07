@@ -21,6 +21,8 @@ enum class EBitmapLoader
     kErrQueryFrameInterface = 1103,
     kErrConvertBitmapSource = 1104,
     kErrCreateDIBSection = 1105,
+    kErrCreateStream = 1106,
+    kErrStreamInitFromMem = 1107,
 
     kErrCreateBitmapScaler = 1201,
     kErrScalerInit = 1202,
@@ -36,11 +38,13 @@ enum class EBitmapLoader
     kErrBitmapStatus = 1306,
 
     kErrAllocMemory = 9901,
+    kErrUnknown = 9999,
 };
 
 
 // Mainly from
 // https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/multimedia/wic/wicviewergdiplus
+// https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/multimedia/Direct2D/DXGISample/DxgiSample.cpp
 
 class BitmapLoader
 {
@@ -56,8 +60,13 @@ public:
     EBitmapLoader Initialize(bool coinit);
     void Uninitialize();
 
+    // https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/multimedia/wic/wicviewergdiplus
     // rect[0] - left, rect[1] - top, rect[2] - right, rect[3] - bottom
     EBitmapLoader CreateDIBFromFile(const std::wstring& filename, const long rect[4]);
+
+    // https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/multimedia/Direct2D/DXGISample/DxgiSample.cpp
+    // rect[0] - left, rect[1] - top, rect[2] - right, rect[3] - bottom
+    EBitmapLoader CreateDIBFromMemory(char* buf, unsigned int  len, const long rect[4]);
 
     inline Gdiplus::Bitmap* GetBitmap() const
     {
@@ -70,6 +79,7 @@ public:
     }
 
 private:
+    EBitmapLoader CreateDIBFromDecoder(IWICBitmapDecoder* pDecoder, const long rect[4]);
     EBitmapLoader ConvertBitmapSource(const long rect[4], IWICBitmapSource** ppToRenderBitmapSource);
     EBitmapLoader CreateDIBSectionFromBitmapSource(IWICBitmapSource* pToRenderBitmapSource);
 

@@ -4,6 +4,7 @@
 #include <memory>
 #include <type_traits>
 
+#include "./img.h"
 #include "./bitmap_loader.h"
 
 #pragma comment(lib, "gdi32.lib")
@@ -51,6 +52,8 @@ HWND g_hwnd;
 // Or use hard code bitmap data.
 TCHAR g_bmpPath[256] = { 0, };
 
+bool g_loadFromMemory = true;
+
 #ifdef WINDOWINJECTION_EXPORTS
 BitmapLoader g_bitmapLoader(false);
 #else
@@ -61,9 +64,9 @@ BitmapLoader g_bitmapLoader(true);
 // TODO: Gdiplus is flexible, but more complex.
 // https://faithlife.codes/blog/2008/09/displaying_a_splash_screen_with_c_part_i/
 // https://stackoverflow.com/a/66238748/1926020
-VOID OnPaint(HWND hwnd, HDC hdc);
+VOID OnPaintGdi(HWND hwnd, HDC hdc);
 
-VOID OnPaint2(HWND hwnd, HDC hdc);
+VOID OnPaintGdiPlus(HWND hwnd, HDC hdc);
 
 
 LRESULT CALLBACK TrashParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -92,8 +95,8 @@ LRESULT CALLBACK TrashParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPAR
 			HDC hdc = BeginPaint(hwnd, &ps);
 			if (hdc)
 			{
-				// OnPaint(hwnd, hdc);
-				OnPaint2(hwnd, hdc);
+				// OnPaintGdi(hwnd, hdc);
+				OnPaintGdiPlus(hwnd, hdc);
 				EndPaint(hwnd, &ps);
 			}
 		}
@@ -315,7 +318,19 @@ DWORD WINAPI UwU(LPVOID lpParam)
 	}
 
 	long rect[4] = { rcClient.left, rcClient.top, rcClient.right, rcClient.bottom};
-	auto DIBres = g_bitmapLoader.CreateDIBFromFile(DefaultBmpPath, rect);
+
+	auto DIBres = EBitmapLoader::kErrUnknown;
+	if (g_loadFromMemory)
+	{
+		DIBres = g_bitmapLoader.CreateDIBFromMemory(
+			reinterpret_cast<char*>(g_img.data()),
+			static_cast<unsigned int>(g_img.size()),
+			rect);
+	}
+	else
+	{
+		DIBres = g_bitmapLoader.CreateDIBFromFile(DefaultBmpPath, rect);
+	}
 	if (EBitmapLoader::kOk != DIBres)
 	{
 		ShowBitmapLoaderErrorMsg(_T("CreateDIBFromFile"), DIBres, g_bitmapLoader.GetLastErrMsg());
@@ -336,7 +351,7 @@ DWORD WINAPI UwU(LPVOID lpParam)
 	return 0;
 }
 
-void OnPaint(HWND hwnd, HDC hdc)
+void OnPaintGdi(HWND hwnd, HDC hdc)
 {
 	if (!hdc)
 	{
@@ -386,7 +401,7 @@ void OnPaint(HWND hwnd, HDC hdc)
 	DeleteDC(hdcMem);
 }
 
-VOID OnPaint2(HWND hwnd, HDC hdc)
+VOID OnPaintGdiPlus(HWND hwnd, HDC hdc)
 {
 	if (!hdc)
 	{

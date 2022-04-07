@@ -166,6 +166,82 @@ EBitmapLoader BitmapLoader::CreateDIBFromFile(const std::wstring& filename, cons
         return EBitmapLoader::kErrCreateDecoder;
     }
 
+    CHECK_RETURN(CreateDIBFromDecoder(pDecoder, rect));
+
+    return EBitmapLoader::kOk;
+}
+
+EBitmapLoader BitmapLoader::CreateDIBFromMemory(char* buf, unsigned int  len, const long rect[4])
+{
+    HRESULT hr = S_OK;
+
+    if (!m_pIWICFactory)
+    {
+        SetLastMsg(_T("empty IWICImagingFactory pointer\n"));
+        if (m_printMsg)
+        {
+            _tprintf(m_lastErrMsg);
+        }
+        return EBitmapLoader::kErrCreateFactor;
+    }
+
+    IWICStream* pStream = NULL;
+    // Create a WIC stream to map onto the memory.
+    hr = m_pIWICFactory->CreateStream(&pStream);
+    if (FAILED(hr))
+    {
+        SetLastMsg(_T("Failed CreateStream, 0x%lx\n"), hr);
+        if (m_printMsg)
+        {
+            _tprintf(m_lastErrMsg);
+        }
+        return EBitmapLoader::kErrCreateStream;
+    }
+
+    // Initialize the stream with the memory pointer and size.
+    hr = pStream->InitializeFromMemory(
+        reinterpret_cast<BYTE*>(buf),
+        len
+    );
+    if (FAILED(hr))
+    {
+        SetLastMsg(_T("Failed InitializeFromMemory, 0x%lx\n"), hr);
+        if (m_printMsg)
+        {
+            _tprintf(m_lastErrMsg);
+        }
+        return EBitmapLoader::kErrStreamInitFromMem;
+    }
+
+    // Create a decoder
+    IWICBitmapDecoder* pDecoder = NULL;
+    RELEASE_AUTO(pDecoder);
+    // Create a decoder for the stream.
+    hr = m_pIWICFactory->CreateDecoderFromStream(
+        pStream,
+        NULL,
+        WICDecodeMetadataCacheOnLoad,
+        &pDecoder
+    );
+    if (FAILED(hr))
+    {
+        SetLastMsg(_T("Failed CreateDecoderFromStream, 0x%lx\n"), hr);
+        if (m_printMsg)
+        {
+            _tprintf(m_lastErrMsg);
+        }
+        return EBitmapLoader::kErrCreateDecoder;
+    }
+
+    CHECK_RETURN(CreateDIBFromDecoder(pDecoder, rect));
+
+    return EBitmapLoader::kOk;
+}
+
+EBitmapLoader BitmapLoader::CreateDIBFromDecoder(IWICBitmapDecoder* pDecoder, const long rect[4])
+{
+    HRESULT hr = S_OK;
+
     // Retrieve the first frame of the image from the decoder
     IWICBitmapFrameDecode* pFrame = NULL;
     RELEASE_AUTO(pFrame);
@@ -429,15 +505,18 @@ void BitmapLoader::DeleteBufferAndBmp()
 
 void BitmapLoader::SetLastMsg(const TCHAR* format, ...)
 {
-    auto headerLen = _tcslen(m_msgHeader) * sizeof(m_msgHeader[0]);
     memset(m_lastErrMsg, 0, sizeof(m_lastErrMsg));
-    memcpy_s(m_lastErrMsg, sizeof(m_lastErrMsg), m_msgHeader, headerLen);
+    memcpy_s(
+        m_lastErrMsg,
+        sizeof(m_lastErrMsg),
+        m_msgHeader,
+        _tcslen(m_msgHeader) * sizeof(m_msgHeader[0]));
 
     va_list args;
     va_start(args, format);
     _vsntprintf_s(
         (TCHAR* const)(m_lastErrMsg + _tcslen(m_msgHeader)),
-        sizeof(m_lastErrMsg) - headerLen,
+        _countof(m_lastErrMsg) - _tcslen(m_msgHeader),
         _TRUNCATE,
         format,
         args);

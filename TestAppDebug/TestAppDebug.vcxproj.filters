@@ -24,6 +24,9 @@
     <ClInclude Include="..\WindowInjection\bitmap_loader.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\WindowInjection\img.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\WindowInjection\pch.cpp">
@@ -33,6 +36,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\WindowInjection\dllmain.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WindowInjection\img.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

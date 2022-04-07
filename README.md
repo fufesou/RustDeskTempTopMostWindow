@@ -18,6 +18,10 @@ Run ```taskkill /F /IM MiniBroker.exe``` to close the white window.
 
 ## Projections
 
+### Img2Mem
+
+This project generates ```WindowInjection/img.cpp```, which is used as a memory png data.
+
 ### WindowInjection
 
 The DLL project.
