@@ -2,7 +2,7 @@
 
 #include "framework.h"
 
-#include <vector>
 
-extern std::vector<unsigned char> g_img;
+extern unsigned char g_img[];
+extern long long g_imgLen;
 

@@ -217,7 +217,7 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		return nullptr;
 	}
 
-	bool test = true;
+	bool test = false;
 	if (test)
 	{
 		mi.rcMonitor.left += 100;
@@ -323,8 +323,8 @@ DWORD WINAPI UwU(LPVOID lpParam)
 	if (g_loadFromMemory)
 	{
 		DIBres = g_bitmapLoader.CreateDIBFromMemory(
-			reinterpret_cast<char*>(g_img.data()),
-			static_cast<unsigned int>(g_img.size()),
+			reinterpret_cast<char*>(g_img),
+			static_cast<unsigned int>(g_imgLen),
 			rect);
 	}
 	else

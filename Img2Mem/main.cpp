@@ -52,7 +52,7 @@ int write_imgdata(const std::vector<char>& data, const char* outfile)
 
     ofs << "#include \"pch.h\"\n";
     ofs << "#include \"./img.h\"\n\n";
-    ofs << "std::vector<unsigned char> g_img{\n";
+    ofs << "unsigned char g_img[] = {\n";
 
     auto total = data.size();
     const unsigned char* pdata = reinterpret_cast<const unsigned char*>(data.data());
@@ -72,7 +72,9 @@ int write_imgdata(const std::vector<char>& data, const char* outfile)
         ofs << buf;
         ofs << "\n";
     }
-    ofs << "};\n";
+    ofs << "};\n\n";
+
+    ofs << "long long g_imgLen = sizeof(g_img);\n";
 
     return 0;
 }
@@ -112,7 +114,7 @@ int save_img(const char* outfile)
         return 0;
     }
 
-    std::copy(g_img.begin(), g_img.end(), std::ostreambuf_iterator<char>(ofs));
+    std::copy(g_img, g_img + g_imgLen, std::ostreambuf_iterator<char>(ofs));
     printf("Succeeded to write to %s\n", outfile);
     return 0;
 }
