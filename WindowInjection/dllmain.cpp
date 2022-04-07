@@ -1,11 +1,12 @@
-﻿#include "pch.h"
+#include "pch.h"
+
 #include <tchar.h>
 #include <memory>
 #include <type_traits>
-#include "./resource.h"
+
+#include "./bitmap_loader.h"
 
 #pragma comment(lib, "gdi32.lib")
-#pragma comment(lib, "Gdiplus.lib")
 
 
 enum ZBID
@@ -42,21 +43,27 @@ typedef BOOL(WINAPI* SetWindowBand)(HWND hWnd, HWND hwndInsertAfter, DWORD dwBan
 typedef BOOL(WINAPI* GetWindowBand)(HWND hWnd, PDWORD pdwBand);
 typedef HDWP(WINAPI* DeferWindowPosAndBand)(_In_ HDWP hWinPosInfo, _In_ HWND hWnd, _In_opt_ HWND hWndInsertAfter, _In_ int x, _In_ int y, _In_ int cx, _In_ int cy, _In_ UINT uFlags, DWORD band, DWORD pls);
 
-typedef std::shared_ptr<std::remove_pointer<HWND>::type> SharedHWND;
-
 typedef BOOL(WINAPI* SetBrokeredForeground)(HWND hWnd);
 
-SharedHWND g_shwnd = nullptr;
+HWND g_hwnd;
 
 // TODO: Read the register table to get the path.
 // Or use hard code bitmap data.
 TCHAR g_bmpPath[256] = { 0, };
+
+#ifdef WINDOWINJECTION_EXPORTS
+BitmapLoader g_bitmapLoader(false);
+#else
+BitmapLoader g_bitmapLoader(true);
+#endif
 
 // Mainly from https://github.com/microsoft/Windows-classic-samples/blob/67a8cddc25880ebc64018e833f0bf51589fd4521/Samples/Win7Samples/winui/shell/appshellintegration/NotificationIcon/NotificationIcon.cpp#L360
 // TODO: Gdiplus is flexible, but more complex.
 // https://faithlife.codes/blog/2008/09/displaying_a_splash_screen_with_c_part_i/
 // https://stackoverflow.com/a/66238748/1926020
 VOID OnPaint(HWND hwnd, HDC hdc);
+
+VOID OnPaint2(HWND hwnd, HDC hdc);
 
 
 LRESULT CALLBACK TrashParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -83,8 +90,12 @@ LRESULT CALLBACK TrashParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPAR
 			// paint a pretty picture
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hwnd, &ps);
-			OnPaint(hwnd, hdc);
-			EndPaint(hwnd, &ps);
+			if (hdc)
+			{
+				// OnPaint(hwnd, hdc);
+				OnPaint2(hwnd, hdc);
+				EndPaint(hwnd, &ps);
+			}
 		}
 		break;
 
@@ -103,12 +114,34 @@ void ShowErrorMsg(const TCHAR* caption)
 		NULL, code, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		msg, (sizeof(msg) / sizeof(msg[0])), NULL);
 
+#ifdef WINDOWINJECTION_EXPORTS
 	TCHAR buf[1024] = { 0, };
 	_sntprintf_s(buf, sizeof(buf) / sizeof(buf[0]), _TRUNCATE, _T("%s, code 0x%x"), msg, code);
 	MessageBox(NULL, buf, caption, 0);
+#else
+	_tprintf(_T("%s: %s, code 0x%x\n"), caption, msg, code);
+#endif
 }
 
-SharedHWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* classname)
+void ShowBitmapLoaderErrorMsg(const TCHAR* msg, EBitmapLoader code, const TCHAR* detail)
+{
+#ifdef WINDOWINJECTION_EXPORTS
+	TCHAR buf[1024] = { 0, };
+	_sntprintf_s(
+		buf,
+		sizeof(buf) / sizeof(buf[0]),
+		_TRUNCATE,
+		_T("%s, %s, code %d"),
+		msg,
+		detail,
+		static_cast<int>(code));
+	MessageBox(NULL, buf, _T("BitmapLoader"), 0);
+#else
+	_tprintf(_T("BitmapLoader: %s, %s, code %d\n"), msg, detail, static_cast<int>(code));
+#endif
+}
+
+HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* classname)
 {
 	HINSTANCE hInstance = hModule;
 	WNDCLASSEX wndParentClass;
@@ -163,13 +196,6 @@ SharedHWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR
 		ShowErrorMsg(_T("CreateWindowInBand"));
 		return nullptr;
 	}
-
-	SharedHWND shwnd(hwnd, [](HWND hwnd) {
-		if (FALSE == DestroyWindow(hwnd))
-		{
-			ShowErrorMsg(_T("DestroyWindow"));
-		}
-		});
 
 	if (FALSE == SetWindowText(hwnd, title))
 	{
@@ -244,35 +270,61 @@ SharedHWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR
 	}
 
 	ShowWindow(hwnd, SW_HIDE);
+	
 	if (FALSE == UpdateWindow(hwnd))
 	{
 		ShowErrorMsg(_T("UpdateWindow"));
 		return nullptr;
 	}
 
-	return shwnd;
-}
-
-SharedHWND FillImage(SharedHWND shwnd)
-{
-	if (!shwnd)
-	{
-		return shwnd;
-	}
-	HWND hwnd = shwnd.get();
-
-
-	return shwnd;
+	return hwnd;
 }
 
 DWORD WINAPI UwU(LPVOID lpParam)
 {
-	g_shwnd = CreateWin(NULL, ZBID_ABOVELOCK_UX, WindowTitle, ClassName);
-	g_shwnd = FillImage(g_shwnd);
-	if (!g_shwnd)
+#ifdef WINDOWINJECTION_EXPORTS
+	auto initRes = g_bitmapLoader.Initialize(true);
+#else
+	auto initRes = g_bitmapLoader.Initialize(true);
+#endif
+	if (EBitmapLoader::kOk != initRes)
+	{
+		ShowBitmapLoaderErrorMsg(_T("Initialize"), initRes, g_bitmapLoader.GetLastErrMsg());
+		return 0;
+	}
+
+#ifdef WINDOWINJECTION_EXPORTS
+	g_hwnd = CreateWin(NULL, ZBID_ABOVELOCK_UX, WindowTitle, ClassName);
+#else
+	g_hwnd = CreateWin(NULL, ZBID_DESKTOP, WindowTitle, ClassName);
+#endif
+	if (!g_hwnd)
 	{
 		return 0;
 	}
+
+	RECT rcClient;
+	if (FALSE == GetClientRect(g_hwnd, &rcClient))
+	{
+#ifdef WINDOWINJECTION_EXPORTS
+		MessageBox(NULL, _T("Failed to GetClientRect"), _T("BitmapLoader"), 0);
+#else
+		_tprintf(_T("BitmapLoader: Failed to GetClientRect\n"));
+#endif
+		return 0;
+	}
+
+	long rect[4] = { rcClient.left, rcClient.top, rcClient.right, rcClient.bottom};
+	auto DIBres = g_bitmapLoader.CreateDIBFromFile(DefaultBmpPath, rect);
+	if (EBitmapLoader::kOk != DIBres)
+	{
+		ShowBitmapLoaderErrorMsg(_T("CreateDIBFromFile"), DIBres, g_bitmapLoader.GetLastErrMsg());
+		return 0;
+	}
+
+#ifndef WINDOWINJECTION_EXPORTS
+	ShowWindow(g_hwnd, SW_SHOW);
+#endif
 
 	MSG msg;
 	while (GetMessage(&msg, nullptr, 0, 0))
@@ -286,6 +338,11 @@ DWORD WINAPI UwU(LPVOID lpParam)
 
 void OnPaint(HWND hwnd, HDC hdc)
 {
+	if (!hdc)
+	{
+		return;
+	}
+
 	static HBITMAP hbmp = NULL;
 	if (hbmp == NULL)
 	{
@@ -329,22 +386,52 @@ void OnPaint(HWND hwnd, HDC hdc)
 	DeleteDC(hdcMem);
 }
 
+VOID OnPaint2(HWND hwnd, HDC hdc)
+{
+	if (!hdc)
+	{
+		return;
+	}
 
+	auto bitmap = g_bitmapLoader.GetBitmap();
+	if (bitmap)
+	{
+		// Create rendering area
+		Gdiplus::SizeF sizef = Gdiplus::SizeF(
+			(Gdiplus::REAL)bitmap->GetWidth(),
+			(Gdiplus::REAL)bitmap->GetHeight());
+
+		Gdiplus::RectF rcClient = Gdiplus::RectF(Gdiplus::PointF(0, 0), sizef);
+
+		// Render the Bitmap
+		Gdiplus::Graphics graphics(hdc);
+		graphics.DrawImage(bitmap, rcClient);
+	}
+}
+
+#ifdef WINDOWINJECTION_EXPORTS
+
+// https://docs.microsoft.com/en-us/windows/win32/dlls/dllmain
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ulReasonForCall, LPVOID lpReserved)
 {
+	// https://tbhaxor.com/loading-dlls-using-cpp-in-windows/
 	switch (ulReasonForCall)
 	{
 	case DLL_PROCESS_ATTACH:
+		// Initialize once for each new process.
 		CreateThread(nullptr, 0, UwU, hModule, NULL, NULL);
 		break;
 	case DLL_THREAD_ATTACH:
+		// Do thread-specific initialization.
 		break;
 	case DLL_THREAD_DETACH:
+		// Do thread-specific cleanup.
 		break;
 	case DLL_PROCESS_DETACH:
-		if (g_shwnd)
+		// Perform any necessary cleanup.
+		if (g_hwnd)
 		{
-			PostMessage(g_shwnd.get(), WM_CLOSE, NULL, NULL);
+			PostMessage(g_hwnd, WM_CLOSE, NULL, NULL);
 		}
 		break;
 	default:
@@ -353,3 +440,23 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ulReasonForCall, LPVOID lpReserved
 
 	return TRUE;
 }
+
+#else
+
+int main(int argc, char* argv[])
+{
+	HMODULE hInstance = nullptr;
+    BOOL result =
+        GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+            reinterpret_cast<char*>(&DefWindowProc), &hInstance);
+	if (FALSE == result)
+	{
+		printf("Failed to GetModuleHandleExA, 0x%x\n", GetLastError());
+		return 0;
+	}
+
+	return UwU(hInstance);
+}
+
+#endif

@@ -15,3 +15,19 @@ Run demo will cause the whole screen to be covered.
 It will be better to set ```test``` to be true in line ```bool test = false;``` [dllmain.cpp](./WindowInjection/dllmain.cpp).
 
 Run ```taskkill /F /IM MiniBroker.exe``` to close the white window.
+
+## Projections
+
+### WindowInjection
+
+The DLL project.
+
+### TestApp
+
+The test project to work with ```WindowInjection```.
+
+### TestAppDebug
+
+The self alone project to debug.
+It's written almost the same logic to ```WindowInjection```.
+

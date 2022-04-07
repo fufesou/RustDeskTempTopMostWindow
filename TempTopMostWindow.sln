@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestApp", "TestApp\TestApp.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowInjection", "WindowInjection\WindowInjection.vcxproj", "{056753C4-4C1B-4A55-83E4-85AD61D9D064}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestAppDebug", "TestAppDebug\TestAppDebug.vcxproj", "{46B8AE1F-E839-4847-B055-1606063FDD5F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{056753C4-4C1B-4A55-83E4-85AD61D9D064}.Release|x64.Build.0 = Release|x64
 		{056753C4-4C1B-4A55-83E4-85AD61D9D064}.Release|x86.ActiveCfg = Release|Win32
 		{056753C4-4C1B-4A55-83E4-85AD61D9D064}.Release|x86.Build.0 = Release|Win32
+		{46B8AE1F-E839-4847-B055-1606063FDD5F}.Debug|x64.ActiveCfg = Debug|x64
+		{46B8AE1F-E839-4847-B055-1606063FDD5F}.Debug|x64.Build.0 = Debug|x64
+		{46B8AE1F-E839-4847-B055-1606063FDD5F}.Debug|x86.ActiveCfg = Debug|Win32
+		{46B8AE1F-E839-4847-B055-1606063FDD5F}.Debug|x86.Build.0 = Debug|Win32
+		{46B8AE1F-E839-4847-B055-1606063FDD5F}.Release|x64.ActiveCfg = Release|x64
+		{46B8AE1F-E839-4847-B055-1606063FDD5F}.Release|x64.Build.0 = Release|x64
+		{46B8AE1F-E839-4847-B055-1606063FDD5F}.Release|x86.ActiveCfg = Release|Win32
+		{46B8AE1F-E839-4847-B055-1606063FDD5F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
