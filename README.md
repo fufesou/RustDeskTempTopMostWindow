@@ -12,25 +12,25 @@ By default, this project will inject "C:\windows\System32\RuntimeBroker.exe".
 **NOTE**
 
 Run demo will cause the whole screen to be covered.
-It will be better to set ```test``` to be true in line ```bool test = false;``` [dllmain.cpp](./WindowInjection/dllmain.cpp).
+It will be better to set ```test``` to be true in line ```bool test = false;``` [dllmain.cpp](./WindowInjection/dllmain.cpp#L221).
 
 Run ```taskkill /F /IM MiniBroker.exe``` to close the white window.
 
 ## Projections
 
-### Img2Mem
+### [Img2Mem](./Img2Mem)
 
-This project generates ```WindowInjection/img.cpp```, which is used as a memory png data.
+This project generates [```WindowInjection/img.cpp```](./WindowInjection/img.cpp#L4), which is used as a memory png data.
 
-### WindowInjection
+### [WindowInjection](./WindowInjection)
 
 The DLL project.
 
-### TestApp
+### [TestApp](./TestApp)
 
 The test project to work with ```WindowInjection```.
 
-### TestAppDebug
+### [TestAppDebug](./TestAppDebug)
 
 The self alone project to debug.
 It's written almost the same logic to ```WindowInjection```.

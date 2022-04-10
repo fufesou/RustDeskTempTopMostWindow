@@ -1,3 +1,5 @@
+// Mainly from [MobileShell](https://github.com/ADeltaX/MobileShell)
+
 #include "pch.h"
 
 #include <tchar.h>
@@ -61,11 +63,10 @@ BitmapLoader g_bitmapLoader(true);
 #endif
 
 // Mainly from https://github.com/microsoft/Windows-classic-samples/blob/67a8cddc25880ebc64018e833f0bf51589fd4521/Samples/Win7Samples/winui/shell/appshellintegration/NotificationIcon/NotificationIcon.cpp#L360
-// TODO: Gdiplus is flexible, but more complex.
-// https://faithlife.codes/blog/2008/09/displaying_a_splash_screen_with_c_part_i/
-// https://stackoverflow.com/a/66238748/1926020
 VOID OnPaintGdi(HWND hwnd, HDC hdc);
 
+// https://faithlife.codes/blog/2008/09/displaying_a_splash_screen_with_c_part_i/
+// https://stackoverflow.com/a/66238748/1926020
 VOID OnPaintGdiPlus(HWND hwnd, HDC hdc);
 
 
