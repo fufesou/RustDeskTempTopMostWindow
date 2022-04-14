@@ -324,7 +324,7 @@ DWORD WINAPI UwU(LPVOID lpParam)
 	if (g_loadFromMemory)
 	{
 		DIBres = g_bitmapLoader.CreateDIBFromMemory(
-			reinterpret_cast<char*>(g_img),
+			(char*)(g_img),
 			static_cast<unsigned int>(g_imgLen),
 			rect);
 	}

@@ -106,9 +106,9 @@ int main(int argc, char* argv[])
 	STARTUPINFO startInfo = { 0 };
 	PROCESS_INFORMATION procInfo = { 0 };
 
-	TCHAR cmdline[MAX_PATH] = { 0, };
-	_sntprintf_s(cmdline, sizeof(cmdline) / sizeof(cmdline[0]), _TRUNCATE, _T("%s\\MiniBroker.exe"), dir);
-	//TCHAR cmdline[] = L"C:\\Windows\\System32\\RuntimeBroker.exe";
+	//TCHAR cmdline[MAX_PATH] = { 0, };
+	// _sntprintf_s(cmdline, sizeof(cmdline) / sizeof(cmdline[0]), _TRUNCATE, _T("%s\\MiniBroker.exe"), dir);
+	TCHAR cmdline[] = L"C:\\Windows\\System32\\RuntimeBroker.exe";
 
 	startInfo.cb = sizeof(startInfo);
 
@@ -139,8 +139,9 @@ int main(int argc, char* argv[])
 		ShowWindow(hwnd, SW_SHOW);
 		std::this_thread::sleep_for(std::chrono::milliseconds(1 * 1000));
 
-		// printf("now destroy window\n");
-		// PostMessage(hwnd, WM_CLOSE, NULL, NULL);
+		std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000));
+		printf("now destroy window\n");
+		PostMessage(hwnd, WM_CLOSE, NULL, NULL);
 	}
 
 	return 0;
