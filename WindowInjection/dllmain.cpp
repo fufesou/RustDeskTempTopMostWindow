@@ -41,10 +41,39 @@ const TCHAR* WindowTitle = _T("RustDeskPrivacyWindow");
 const TCHAR* ClassName = _T("RustDeskPrivacyWindowClass");
 const TCHAR* DefaultBmpPath = _T("C:\\aa.bmp");
 
+typedef enum tagDWMWINDOWATTRIBUTE {
+	DWMWA_NCRENDERING_ENABLED,
+	DWMWA_NCRENDERING_POLICY,
+	DWMWA_TRANSITIONS_FORCEDISABLED,
+	DWMWA_ALLOW_NCPAINT,
+	DWMWA_CAPTION_BUTTON_BOUNDS,
+	DWMWA_NONCLIENT_RTL_LAYOUT,
+	DWMWA_FORCE_ICONIC_REPRESENTATION,
+	DWMWA_FLIP3D_POLICY,
+	DWMWA_EXTENDED_FRAME_BOUNDS,
+	DWMWA_HAS_ICONIC_BITMAP,
+	DWMWA_DISALLOW_PEEK,
+	DWMWA_EXCLUDED_FROM_PEEK,
+	DWMWA_CLOAK,
+	DWMWA_CLOAKED,
+	DWMWA_FREEZE_REPRESENTATION,
+	DWMWA_PASSIVE_UPDATE_MODE,
+	DWMWA_USE_HOSTBACKDROPBRUSH,
+	DWMWA_USE_IMMERSIVE_DARK_MODE = 20,
+	DWMWA_WINDOW_CORNER_PREFERENCE = 33,
+	DWMWA_BORDER_COLOR,
+	DWMWA_CAPTION_COLOR,
+	DWMWA_TEXT_COLOR,
+	DWMWA_VISIBLE_FRAME_BORDER_THICKNESS,
+	DWMWA_SYSTEMBACKDROP_TYPE,
+	DWMWA_LAST,
+} DWMWINDOWATTRIBUTE;
+
 typedef HWND(WINAPI* CreateWindowInBand)(_In_ DWORD dwExStyle, _In_opt_ ATOM atom, _In_opt_ LPCWSTR lpWindowName, _In_ DWORD dwStyle, _In_ int X, _In_ int Y, _In_ int nWidth, _In_ int nHeight, _In_opt_ HWND hWndParent, _In_opt_ HMENU hMenu, _In_opt_ HINSTANCE hInstance, _In_opt_ LPVOID lpParam, DWORD band);
 typedef BOOL(WINAPI* SetWindowBand)(HWND hWnd, HWND hwndInsertAfter, DWORD dwBand);
 typedef BOOL(WINAPI* GetWindowBand)(HWND hWnd, PDWORD pdwBand);
 typedef HDWP(WINAPI* DeferWindowPosAndBand)(_In_ HDWP hWinPosInfo, _In_ HWND hWnd, _In_opt_ HWND hWndInsertAfter, _In_ int x, _In_ int y, _In_ int cx, _In_ int cy, _In_ UINT uFlags, DWORD band, DWORD pls);
+typedef HRESULT(WINAPI* DwmSetWindowAttribute)(HWND hwnd, DWMWINDOWATTRIBUTE dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
 
 typedef BOOL(WINAPI* SetBrokeredForeground)(HWND hWnd);
 
@@ -284,6 +313,26 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 	return hwnd;
 }
 
+// https://github.com/killtimer0/uiaccess/issues/3#issuecomment-1787022010
+HRESULT CloakWindow(HWND hwnd, BOOL cloakHwnd) {
+	HRESULT result;
+	HMODULE hMod = LoadLibrary(TEXT("dwmapi.dll"));
+	if (hMod) {
+		DwmSetWindowAttribute pDwmSetWindowAttribute = (DwmSetWindowAttribute)GetProcAddress(hMod, "DwmSetWindowAttribute");
+		if (pDwmSetWindowAttribute) {
+			result = pDwmSetWindowAttribute(hwnd, DWMWA_CLOAK, &cloakHwnd, sizeof(cloakHwnd));
+		}
+		else {
+			result = HRESULT_FROM_WIN32(GetLastError());
+		}
+		FreeLibrary(hMod);
+	}
+	else {
+		result = HRESULT_FROM_WIN32(GetLastError());
+	}
+	return result;
+}
+
 DWORD WINAPI UwU(LPVOID lpParam)
 {
 #ifdef WINDOWINJECTION_EXPORTS
@@ -306,6 +355,9 @@ DWORD WINAPI UwU(LPVOID lpParam)
 	{
 		return 0;
 	}
+
+	HRESULT res = CloakWindow(g_hwnd, TRUE);
+	(void)res;
 
 	RECT rcClient;
 	if (FALSE == GetClientRect(g_hwnd, &rcClient))
