@@ -98,6 +98,13 @@ VOID OnPaintGdi(HWND hwnd, HDC hdc);
 // https://stackoverflow.com/a/66238748/1926020
 VOID OnPaintGdiPlus(HWND hwnd, HDC hdc);
 
+BOOL IsWindowsVersionOrGreater(
+	DWORD os_major,
+	DWORD os_minor,
+	DWORD build_number,
+	WORD service_pack_major,
+	WORD service_pack_minor);
+
 
 LRESULT CALLBACK TrashParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -358,7 +365,10 @@ DWORD WINAPI UwU(LPVOID lpParam)
 
 	(void)CloakWindow(g_hwnd, TRUE);
 	// Hard code "exclude from capture"
-	(void)SetWindowDisplayAffinity(g_hwnd, WDA_EXCLUDEFROMCAPTURE);
+	if (IsWindowsVersionOrGreater(10, 0, 19041, 0, 0) == TRUE)
+	{
+		(void)SetWindowDisplayAffinity(g_hwnd, WDA_EXCLUDEFROMCAPTURE);
+	}
 
 	RECT rcClient;
 	if (FALSE == GetClientRect(g_hwnd, &rcClient))
@@ -529,3 +539,38 @@ int main(int argc, char* argv[])
 }
 
 #endif
+
+// https://github.com/nodejs/node-convergence-archive/blob/e11fe0c2777561827cdb7207d46b0917ef3c42a7/deps/uv/src/win/util.c#L780
+BOOL IsWindowsVersionOrGreater(
+	DWORD os_major,
+	DWORD os_minor,
+	DWORD build_number,
+	WORD service_pack_major,
+	WORD service_pack_minor)
+{
+	OSVERSIONINFOEX osvi;
+	DWORDLONG condition_mask = 0;
+	int op = VER_GREATER_EQUAL;
+
+	/* Initialize the OSVERSIONINFOEX structure. */
+	ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	osvi.dwMajorVersion = os_major;
+	osvi.dwMinorVersion = os_minor;
+	osvi.dwBuildNumber = build_number;
+	osvi.wServicePackMajor = service_pack_major;
+	osvi.wServicePackMinor = service_pack_minor;
+
+	/* Initialize the condition mask. */
+	VER_SET_CONDITION(condition_mask, VER_MAJORVERSION, op);
+	VER_SET_CONDITION(condition_mask, VER_MINORVERSION, op);
+	VER_SET_CONDITION(condition_mask, VER_SERVICEPACKMAJOR, op);
+	VER_SET_CONDITION(condition_mask, VER_SERVICEPACKMINOR, op);
+
+	/* Perform the test. */
+	return VerifyVersionInfo(
+		&osvi,
+		VER_MAJORVERSION | VER_MINORVERSION |
+		VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
+		condition_mask);
+}
