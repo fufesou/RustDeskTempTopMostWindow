@@ -356,8 +356,9 @@ DWORD WINAPI UwU(LPVOID lpParam)
 		return 0;
 	}
 
-	HRESULT res = CloakWindow(g_hwnd, TRUE);
-	(void)res;
+	(void)CloakWindow(g_hwnd, TRUE);
+	// Hard code "exclude from capture"
+	(void)SetWindowDisplayAffinity(g_hwnd, WDA_EXCLUDEFROMCAPTURE);
 
 	RECT rcClient;
 	if (FALSE == GetClientRect(g_hwnd, &rcClient))
