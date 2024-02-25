@@ -35,7 +35,7 @@ jobs:
     env:
       dist_dir: TempTopMostWindow_${{ inputs.platform }}
       dist_file: TempTopMostWindow_${{ inputs.platform }}.zip
-      build_output_dir: ./${{ inputs.platform }}/${{ inputs.configuration }}
+      build_output_dir: ${{ inputs.platform }}/${{ inputs.configuration }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -54,9 +54,9 @@ jobs:
           mv ./${{ env.build_output_dir }}/TestApp.exe ${{ env.dist_dir }}
           mv ./${{ env.build_output_dir }}/TestAppDebug.exe ${{ env.dist_dir }}
           mv ./${{ env.build_output_dir }}/WindowInjection.dll ${{ env.dist_dir }}
-          mv ./README.md ${{ env.build_output_dir }}
-          Get-ChildItem ${{ env.build_output_dir }} -Recurse -File | ForEach-Object {$filePath = $_.FullName; Write-Output "$($(Get-FileHash -Algorithm SHA256 -Path $filePath).Hash) $filePath" }
-          Compress-Archive -Path ${{ env.build_output_dir }}/* -Destination ${{ env.dist_file }}
+          mv ./README.md ${{ env.dist_dir }}
+          Get-ChildItem ${{ env.dist_dir }} -Recurse -File | ForEach-Object {$filePath = $_.FullName; Write-Output "$($(Get-FileHash -Algorithm SHA256 -Path $filePath).Hash) $filePath" }
+          Compress-Archive -Path ${{ env.dist_dir }}/* -Destination ${{ env.dist_file }}
           md5sum ${{ env.dist_file }} | tee ${{ env.dist_file }}.checksum_md5
           sha256sum ${{ env.dist_file }} | tee  ${{ env.dist_file }}.checksum_sha256
 
