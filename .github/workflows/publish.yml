@@ -43,6 +43,12 @@ jobs:
     env:
       dist_file: TempTopMostWindow_${{ inputs.platform }}.zip
     steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: topmostwindow-artifacts
+          path: .
+
       - name: Publish Release
         uses: softprops/action-gh-release@v1
         if: always()

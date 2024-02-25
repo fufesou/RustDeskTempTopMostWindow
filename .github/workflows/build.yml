@@ -28,7 +28,7 @@ env:
   solution_path: TempTopMostWindow.sln
 
 jobs:
-  build-windows-test-sign:
+  build:
     runs-on: ${{ inputs.target }}
     strategy:
         fail-fast: false
@@ -45,7 +45,7 @@ jobs:
 
       - name: Build the solution
         run: |
-          msbuild ${{ env.solution_path }} -p:Configuration=${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} /p:TargetVersion=${{ matrix.target_version }}
+          msbuild ${{ env.solution_path }} -p:Configuration=${{ inputs.configuration }} -p:Platform=${{ inputs.platform }} /p:TargetVersion=${{ inputs.target_version }}
 
       - name: Zip files
         run: |
@@ -59,3 +59,12 @@ jobs:
           Compress-Archive -Path ${{ env.build_output_dir }}/* -Destination ${{ env.dist_file }}
           md5sum ${{ env.dist_file }} | tee ${{ env.dist_file }}.checksum_md5
           sha256sum ${{ env.dist_file }} | tee  ${{ env.dist_file }}.checksum_sha256
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+            name: topmostwindow-artifacts
+            path: |
+                ${{ env.dist_file }}
+                ${{ env.dist_file }}.checksum_md5
+                ${{ env.dist_file }}.checksum_sha256
