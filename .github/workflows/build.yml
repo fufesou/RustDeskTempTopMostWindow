@@ -1,0 +1,61 @@
+name: build
+
+on:
+  workflow_call:
+    inputs:
+        target:
+            description: 'Target'
+            required: true
+            type: string
+            default: 'windows-2019'
+        configuration:
+            description: 'Configuration'
+            required: true
+            type: string
+            default: 'Release'
+        platform:
+            description: 'Platform'
+            required: true
+            type: string
+            default: 'x64'
+        target_version:
+            description: 'TargetVersion'
+            required: true
+            type: string
+            default: 'Windows10'
+
+env:
+  solution_path: TempTopMostWindow.sln
+
+jobs:
+  build-windows-test-sign:
+    runs-on: ${{ inputs.target }}
+    strategy:
+        fail-fast: false
+    env:
+      dist_dir: TempTopMostWindow_${{ inputs.platform }}
+      dist_file: TempTopMostWindow_${{ inputs.platform }}.zip
+      build_output_dir: ./${{ inputs.platform }}/${{ inputs.configuration }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build the solution
+        run: |
+          msbuild ${{ env.solution_path }} -p:Configuration=${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} /p:TargetVersion=${{ matrix.target_version }}
+
+      - name: Zip files
+        run: |
+          mkdir -p ${{ env.Dist_Dir }}
+          mv ./${{ env.build_output_dir }}/Img2Mem.exe ${{ env.dist_dir }}
+          mv ./${{ env.build_output_dir }}/TestApp.exe ${{ env.dist_dir }}
+          mv ./${{ env.build_output_dir }}/TestAppDebug.exe ${{ env.dist_dir }}
+          mv ./${{ env.build_output_dir }}/WindowInjection.dll ${{ env.dist_dir }}
+          mv ./README.md ${{ env.build_output_dir }}
+          Get-ChildItem ${{ env.build_output_dir }} -Recurse -File | ForEach-Object {$filePath = $_.FullName; Write-Output "$($(Get-FileHash -Algorithm SHA256 -Path $filePath).Hash) $filePath" }
+          Compress-Archive -Path ${{ env.build_output_dir }}/* -Destination ${{ env.dist_file }}
+          md5sum ${{ env.dist_file }} | tee ${{ env.dist_file }}.checksum_md5
+          sha256sum ${{ env.dist_file }} | tee  ${{ env.dist_file }}.checksum_sha256
