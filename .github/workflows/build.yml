@@ -55,6 +55,16 @@ jobs:
           mv ./${{ env.build_output_dir }}/TestAppDebug.exe ${{ env.dist_dir }}
           mv ./${{ env.build_output_dir }}/WindowInjection.dll ${{ env.dist_dir }}
           mv ./README.md ${{ env.dist_dir }}
+
+          $msvcp140 = vswhere -latest -requires Microsoft.Component.MSBuild -find VC\Tools\**\bin\HostX64\x64\msvcp140.dll
+          copy $msvcp140[-1] ${{ env.dist_dir }}
+          $vcruntime140 = vswhere -latest -requires Microsoft.Component.MSBuild -find VC\Tools\**\bin\HostX64\x64\vcruntime140.dll
+          copy $vcruntime140[-1] ${{ env.dist_dir }}
+          $vcruntime140_1 = vswhere -latest -requires Microsoft.Component.MSBuild -find VC\Tools\**\bin\HostX64\x64\vcruntime140_1.dll
+          copy $vcruntime140_1[-1] ${{ env.dist_dir }}
+          $installPath = vswhere -latest -requires Microsoft.Component.MSBuild -property installationPath
+          copy $installPath/Common7/IDE/ucrtbase.dll ${{ env.dist_dir }}
+
           Get-ChildItem ${{ env.dist_dir }} -Recurse -File | ForEach-Object {$filePath = $_.FullName; Write-Output "$($(Get-FileHash -Algorithm SHA256 -Path $filePath).Hash) $filePath" }
           Compress-Archive -Path ${{ env.dist_dir }}/* -Destination ${{ env.dist_file }}
           md5sum ${{ env.dist_file }} | tee ${{ env.dist_file }}.checksum_md5
