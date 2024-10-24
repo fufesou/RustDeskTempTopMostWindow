@@ -5,6 +5,9 @@
 #include <tchar.h>
 #include <memory>
 #include <type_traits>
+#ifndef WINDOWINJECTION_EXPORTS
+#include <thread>
+#endif
 
 #include "./img.h"
 #include "./bitmap_loader.h"
@@ -245,7 +248,7 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		wndParentClass.hInstance,
 		LPVOID(res),
 		zbid);
-	_sntprintf_s(buf, sizeof(buf) / sizeof(buf[0]), _TRUNCATE, _T("GetProcAddress is called: hwnd address is %p"), hwnd);
+	_sntprintf_s(buf, sizeof(buf) / sizeof(buf[0]), _TRUNCATE, _T("pCreateWindowInBand is called: hwnd address is %p"), hwnd);
 	ShowMsgBoxOrLogFile(_T("CreateWin"), buf);
 	if (!hwnd)
 	{
@@ -444,6 +447,13 @@ DWORD WINAPI UwU(LPVOID lpParam)
 #endif
 
 	ShowMsgBoxOrLogFile(_T("UwU"), _T("ShowWindow is called"));
+
+#ifndef WINDOWINJECTION_EXPORTS
+	std::thread([=]() {
+		std::this_thread::sleep_for(std::chrono::milliseconds(3 * 1000));
+		PostMessage(g_hwnd, WM_CLOSE, NULL, NULL);
+		}).detach();
+#endif
 
 	MSG msg;
 	while (GetMessage(&msg, nullptr, 0, 0))
