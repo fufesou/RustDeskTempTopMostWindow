@@ -40,6 +40,7 @@ enum ZBID
 const TCHAR* WindowTitle = _T("RustDeskPrivacyWindow");
 const TCHAR* ClassName = _T("RustDeskPrivacyWindowClass");
 const TCHAR* DefaultBmpPath = _T("C:\\aa.bmp");
+const TCHAR* EnvErr2File = _T("ERRFILE");
 
 typedef enum tagDWMWINDOWATTRIBUTE {
 	DWMWA_NCRENDERING_ENABLED,
@@ -105,6 +106,7 @@ BOOL IsWindowsVersionOrGreater(
 	WORD service_pack_major,
 	WORD service_pack_minor);
 
+VOID ShowMsgBoxOrLogFile(const TCHAR* caption, const TCHAR* msg);
 
 LRESULT CALLBACK TrashParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -157,7 +159,7 @@ void ShowErrorMsg(const TCHAR* caption)
 #ifdef WINDOWINJECTION_EXPORTS
 	TCHAR buf[1024] = { 0, };
 	_sntprintf_s(buf, sizeof(buf) / sizeof(buf[0]), _TRUNCATE, _T("%s, code 0x%x"), msg, code);
-	MessageBox(NULL, buf, caption, 0);
+	ShowMsgBoxOrLogFile(caption, buf);
 #else
 	_tprintf(_T("%s: %s, code 0x%x\n"), caption, msg, code);
 #endif
@@ -175,7 +177,7 @@ void ShowBitmapLoaderErrorMsg(const TCHAR* msg, EBitmapLoader code, const TCHAR*
 		msg,
 		detail,
 		static_cast<int>(code));
-	MessageBox(NULL, buf, _T("BitmapLoader"), 0);
+	ShowMsgBoxOrLogFile(_T("BitmapLoader"), buf);
 #else
 	_tprintf(_T("BitmapLoader: %s, %s, code %d\n"), msg, detail, static_cast<int>(code));
 #endif
@@ -374,7 +376,7 @@ DWORD WINAPI UwU(LPVOID lpParam)
 	if (FALSE == GetClientRect(g_hwnd, &rcClient))
 	{
 #ifdef WINDOWINJECTION_EXPORTS
-		MessageBox(NULL, _T("Failed to GetClientRect"), _T("BitmapLoader"), 0);
+		ShowMsgBoxOrLogFile(_T("BitmapLoader"), _T("Failed to GetClientRect"));
 #else
 		_tprintf(_T("BitmapLoader: Failed to GetClientRect\n"));
 #endif
@@ -573,4 +575,41 @@ BOOL IsWindowsVersionOrGreater(
 		VER_MAJORVERSION | VER_MINORVERSION |
 		VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
 		condition_mask);
+}
+
+VOID Log2File(const TCHAR* filename, const TCHAR* msg);
+VOID ShowMsgBoxOrLogFile(const TCHAR* caption, const TCHAR* msg)
+{
+	TCHAR filename[255];
+    DWORD result = GetEnvironmentVariable(EnvErr2File, filename, sizeof(filename) / sizeof(TCHAR));
+	if (result == 0)
+	{
+		MessageBox(NULL, msg, caption, 0);
+	}
+	else
+	{
+		TCHAR buf[1024] = { 0, };
+		_sntprintf_s(buf, sizeof(buf) / sizeof(buf[0]), _TRUNCATE, _T("%s: %s"), caption, msg);
+		Log2File(filename, buf);
+	}
+}
+
+VOID Log2File(const TCHAR* filename, const TCHAR* msg)
+{
+	HANDLE hFile = CreateFile(
+		filename,
+		FILE_APPEND_DATA,
+		FILE_SHARE_READ,
+		NULL,
+		OPEN_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		return;
+	}
+
+	DWORD dwBytesWritten = 0;
+	WriteFile(hFile, msg, static_cast<DWORD>(_tcslen(msg) * sizeof(TCHAR)), &dwBytesWritten, NULL);
+	CloseHandle(hFile);
 }
