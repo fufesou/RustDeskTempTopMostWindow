@@ -5,6 +5,9 @@
 #include <tchar.h>
 #include <memory>
 #include <type_traits>
+#ifndef WINDOWINJECTION_EXPORTS
+#include <thread>
+#endif
 
 #include "./img.h"
 #include "./bitmap_loader.h"
@@ -407,6 +410,13 @@ DWORD WINAPI UwU(LPVOID lpParam)
 	ShowWindow(g_hwnd, SW_SHOW);
 #endif
 
+#ifndef WINDOWINJECTION_EXPORTS
+	std::thread([=]() {
+		std::this_thread::sleep_for(std::chrono::milliseconds(3 * 1000));
+		PostMessage(g_hwnd, WM_CLOSE, NULL, NULL);
+		}).detach();
+#endif
+
 	MSG msg;
 	while (GetMessage(&msg, nullptr, 0, 0))
 	{
@@ -596,6 +606,11 @@ VOID ShowMsgBoxOrLogFile(const TCHAR* caption, const TCHAR* msg)
 
 VOID Log2File(const TCHAR* filename, const TCHAR* msg)
 {
+	if (filename == nullptr || msg == nullptr || _tcslen(filename) == 0 || _tcslen(msg) == 0)
+	{
+		return;
+	}
+
 	HANDLE hFile = CreateFile(
 		filename,
 		FILE_APPEND_DATA,
@@ -611,5 +626,9 @@ VOID Log2File(const TCHAR* filename, const TCHAR* msg)
 
 	DWORD dwBytesWritten = 0;
 	WriteFile(hFile, msg, static_cast<DWORD>(_tcslen(msg) * sizeof(TCHAR)), &dwBytesWritten, NULL);
+	if ( msg[_tcslen(msg) - 1] != _T('\n'))
+	{
+		WriteFile(hFile, _T("\n"), sizeof(TCHAR), &dwBytesWritten, NULL);
+	}
 	CloseHandle(hFile);
 }
