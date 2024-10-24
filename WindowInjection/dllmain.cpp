@@ -207,6 +207,7 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		ShowErrorMsg(_T("RegisterClassEx"));
 		return nullptr;
 	}
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("RegisterClassEx is called"));
 
 	const auto hpath = LoadLibrary(_T("user32.dll"));
 	if (hpath == 0)
@@ -214,6 +215,7 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		ShowErrorMsg(_T("LoadLibrary user32.dll"));
 		return nullptr;
 	}
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("LoadLibrary is called"));
 
 	const auto pCreateWindowInBand = CreateWindowInBand(GetProcAddress(hpath, "CreateWindowInBand"));
 	if (!pCreateWindowInBand)
@@ -221,6 +223,7 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		ShowErrorMsg(_T("GetProcAddress CreateWindowInBand"));
 		return nullptr;
 	}
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("GetProcAddress is called"));
 
 	HWND hwnd = pCreateWindowInBand(
 		WS_EX_TOPMOST | WS_EX_NOACTIVATE,
@@ -238,16 +241,24 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		ShowErrorMsg(_T("CreateWindowInBand"));
 		return nullptr;
 	}
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("CreateWindowInBand is called"));
 
 	if (FALSE == SetWindowText(hwnd, title))
 	{
 		ShowErrorMsg(_T("SetWindowText"));
 		return nullptr;
 	}
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("SetWindowText is called"));
 
 	// https://devblogs.microsoft.com/oldnewthing/20050505-04/?p=35703
 	// https://stackoverflow.com/a/5299718/1926020
 	HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("MonitorFromWindow is called"));
+	if (hmon == 0)
+	{
+		ShowErrorMsg(_T("MonitorFromWindow"));
+		return nullptr;
+	}
 	MONITORINFO mi = { sizeof(mi) };
 	
 	if (0 == GetMonitorInfo(hmon, &mi))
@@ -255,6 +266,7 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		ShowErrorMsg(_T("GetMonitorInfo"));
 		return nullptr;
 	}
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("GetMonitorInfo is called"));
 
 	bool test = false;
 	if (test)
@@ -300,6 +312,7 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		ShowErrorMsg(_T("SetWindowPos"));
 		return nullptr;
 	}
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("SetWindowPos is called"));
 
 	auto setLongRes = SetWindowLong(
 		hwnd,
@@ -310,6 +323,7 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		ShowErrorMsg(_T("SetWindowLong"));
 		return nullptr;
 	}
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("SetWindowLong is called"));
 
 	ShowWindow(hwnd, SW_HIDE);
 	
@@ -318,6 +332,7 @@ HWND CreateWin(HMODULE hModule, UINT zbid, const TCHAR* title, const TCHAR* clas
 		ShowErrorMsg(_T("UpdateWindow"));
 		return nullptr;
 	}
+	ShowMsgBoxOrLogFile(_T("CreateWin"), _T("UpdateWindow is called"));
 
 	return hwnd;
 }
