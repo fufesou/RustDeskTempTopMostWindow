@@ -344,6 +344,7 @@ HRESULT CloakWindow(HWND hwnd, BOOL cloakHwnd) {
 
 DWORD WINAPI UwU(LPVOID lpParam)
 {
+	ShowMsgBoxOrLogFile(_T("UwU"), _T("UwU() is called"));
 #ifdef WINDOWINJECTION_EXPORTS
 	auto initRes = g_bitmapLoader.Initialize(true);
 #else
@@ -355,6 +356,7 @@ DWORD WINAPI UwU(LPVOID lpParam)
 		return 0;
 	}
 
+	ShowMsgBoxOrLogFile(_T("UwU"), _T("BitmapLoader is initialized"));
 #ifdef WINDOWINJECTION_EXPORTS
 	g_hwnd = CreateWin(NULL, ZBID_ABOVELOCK_UX, WindowTitle, ClassName);
 #else
@@ -365,6 +367,7 @@ DWORD WINAPI UwU(LPVOID lpParam)
 		return 0;
 	}
 
+	ShowMsgBoxOrLogFile(_T("UwU"), _T("Window is created"));
 	(void)CloakWindow(g_hwnd, TRUE);
 	// Hard code "exclude from capture"
 	if (IsWindowsVersionOrGreater(10, 0, 19041, 0, 0) == TRUE)
@@ -383,6 +386,7 @@ DWORD WINAPI UwU(LPVOID lpParam)
 		return 0;
 	}
 
+	ShowMsgBoxOrLogFile(_T("UwU"), _T("GetClientRect is called"));
 	long rect[4] = { rcClient.left, rcClient.top, rcClient.right, rcClient.bottom};
 
 	auto DIBres = EBitmapLoader::kErrUnknown;
@@ -402,10 +406,13 @@ DWORD WINAPI UwU(LPVOID lpParam)
 		ShowBitmapLoaderErrorMsg(_T("CreateDIBFromFile"), DIBres, g_bitmapLoader.GetLastErrMsg());
 		return 0;
 	}
+	ShowMsgBoxOrLogFile(_T("UwU"), _T("CreateDIBFromFile is called"));
 
 #ifndef WINDOWINJECTION_EXPORTS
 	ShowWindow(g_hwnd, SW_SHOW);
 #endif
+
+	ShowMsgBoxOrLogFile(_T("UwU"), _T("ShowWindow is called"));
 
 	MSG msg;
 	while (GetMessage(&msg, nullptr, 0, 0))
@@ -580,14 +587,15 @@ BOOL IsWindowsVersionOrGreater(
 VOID Log2File(const TCHAR* filename, const TCHAR* msg);
 VOID ShowMsgBoxOrLogFile(const TCHAR* caption, const TCHAR* msg)
 {
-	TCHAR filename[255];
-    DWORD result = GetEnvironmentVariable(EnvErr2File, filename, sizeof(filename) / sizeof(TCHAR));
-	if (result == 0)
+	// TCHAR filename[255];
+    // DWORD result = GetEnvironmentVariable(EnvErr2File, filename, sizeof(filename) / sizeof(TCHAR));
+	// if (result == 0)
+	// {
+	// 	MessageBox(NULL, msg, caption, 0);
+	// }
+	// else
 	{
-		MessageBox(NULL, msg, caption, 0);
-	}
-	else
-	{
+		TCHAR filename[255] = _T("a.txt");
 		TCHAR buf[1024] = { 0, };
 		_sntprintf_s(buf, sizeof(buf) / sizeof(buf[0]), _TRUNCATE, _T("%s: %s"), caption, msg);
 		Log2File(filename, buf);
@@ -596,6 +604,11 @@ VOID ShowMsgBoxOrLogFile(const TCHAR* caption, const TCHAR* msg)
 
 VOID Log2File(const TCHAR* filename, const TCHAR* msg)
 {
+	if (filename == nullptr || msg == nullptr || _tcslen(filename) == 0 || _tcslen(msg) == 0)
+	{
+		return;
+	}
+
 	HANDLE hFile = CreateFile(
 		filename,
 		FILE_APPEND_DATA,
@@ -611,5 +624,9 @@ VOID Log2File(const TCHAR* filename, const TCHAR* msg)
 
 	DWORD dwBytesWritten = 0;
 	WriteFile(hFile, msg, static_cast<DWORD>(_tcslen(msg) * sizeof(TCHAR)), &dwBytesWritten, NULL);
+	if ( msg[_tcslen(msg) - 1] != _T('\n'))
+	{
+		WriteFile(hFile, _T("\n"), sizeof(TCHAR), &dwBytesWritten, NULL);
+	}
 	CloseHandle(hFile);
 }

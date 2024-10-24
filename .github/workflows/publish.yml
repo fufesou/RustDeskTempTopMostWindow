@@ -54,7 +54,7 @@ jobs:
         if: always()
         with:
           prerelease: true
-          tag_name: build_github_ci
+          tag_name: test_find_window
           files: |
             ${{ env.dist_file }}
             ${{ env.dist_file }}.checksum_md5
