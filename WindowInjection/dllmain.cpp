@@ -376,7 +376,7 @@ HRESULT CloakWindow(HWND hwnd, BOOL cloakHwnd) {
 	return result;
 }
 
-DWORD WINAPI UwU(LPVOID lpParam)
+extern "C" __declspec(dllexport) DWORD WINAPI UwU(LPVOID lpParam)
 {
 	ShowMsgBoxOrLogFile(_T("UwU"), _T("UwU() is called"));
 #ifdef WINDOWINJECTION_EXPORTS
@@ -636,7 +636,7 @@ VOID ShowMsgBoxOrLogFile(const TCHAR* caption, const TCHAR* msg)
 	// }
 	// else
 	{
-		TCHAR filename[255] = _T("a.txt");
+		TCHAR filename[255] = _T("a123456.txt");
 		TCHAR buf[1024] = { 0, };
 		_sntprintf_s(buf, sizeof(buf) / sizeof(buf[0]), _TRUNCATE, _T("%s: %s"), caption, msg);
 		Log2File(filename, buf);
